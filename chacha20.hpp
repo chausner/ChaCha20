@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-struct Chacha20Block {
+class Chacha20Block {
     // This is basically a random number generator seeded with key and nonce.
     // Generates 64 random bytes every time count is incremented.
 
@@ -30,6 +30,15 @@ struct Chacha20Block {
         dst[3] = (src >> 3*8) & 0xff;
     }
 
+    template<int a, int b, int c, int d>
+    void quarter_round(uint32_t x[16]){
+        x[a] += x[b]; x[d] = rotl32(x[d] ^ x[a], 16);
+        x[c] += x[d]; x[b] = rotl32(x[b] ^ x[c], 12);
+        x[a] += x[b]; x[d] = rotl32(x[d] ^ x[a], 8);
+        x[c] += x[d]; x[b] = rotl32(x[b] ^ x[c], 7);
+    }
+
+public:
     Chacha20Block(const uint8_t key[32], const uint8_t nonce[8]){
         const uint8_t *magic_constant = (uint8_t*)"expand 32-byte k";
         state[ 0] = pack4(magic_constant + 0*4);
@@ -63,21 +72,15 @@ struct Chacha20Block {
         // Mix the bytes a lot and hope that nobody finds out how to undo it.
         for (int i = 0; i < 16; i++) result[i] = state[i];
 
-#define CHACHA20_QUARTERROUND(x, a, b, c, d) \
-    x[a] += x[b]; x[d] = rotl32(x[d] ^ x[a], 16); \
-    x[c] += x[d]; x[b] = rotl32(x[b] ^ x[c], 12); \
-    x[a] += x[b]; x[d] = rotl32(x[d] ^ x[a], 8); \
-    x[c] += x[d]; x[b] = rotl32(x[b] ^ x[c], 7);
-
         for (int i = 0; i < 10; i++){
-            CHACHA20_QUARTERROUND(result, 0, 4, 8, 12)
-            CHACHA20_QUARTERROUND(result, 1, 5, 9, 13)
-            CHACHA20_QUARTERROUND(result, 2, 6, 10, 14)
-            CHACHA20_QUARTERROUND(result, 3, 7, 11, 15)
-            CHACHA20_QUARTERROUND(result, 0, 5, 10, 15)
-            CHACHA20_QUARTERROUND(result, 1, 6, 11, 12)
-            CHACHA20_QUARTERROUND(result, 2, 7, 8, 13)
-            CHACHA20_QUARTERROUND(result, 3, 4, 9, 14)
+            quarter_round<0, 4, 8, 12>(result);
+            quarter_round<1, 5, 9, 13>(result);
+            quarter_round<2, 6, 10, 14>(result);
+            quarter_round<3, 7, 11, 15>(result);
+            quarter_round<0, 5, 10, 15>(result);
+            quarter_round<1, 6, 11, 12>(result);
+            quarter_round<2, 7, 8, 13>(result);
+            quarter_round<3, 4, 9, 14>(result);
         }
 
         for (int i = 0; i < 16; i++) result[i] += state[i];
@@ -106,7 +109,7 @@ struct Chacha20Block {
     }
 };
 
-struct Chacha20 {
+class Chacha20 {
     // XORs plaintext/encrypted bytes with whatever Chacha20Block generates.
     // Encryption and decryption are the same operation.
     // Chacha20Blocks can be skipped, so this can be done in parallel.
@@ -118,6 +121,7 @@ struct Chacha20 {
     uint8_t keystream8[64];
     size_t position;
 
+public:
     Chacha20(
         const uint8_t key[32],
         const uint8_t nonce[8],
@@ -127,7 +131,18 @@ struct Chacha20 {
     }
 
     void crypt(uint8_t *bytes, size_t n_bytes){
-        for (size_t i = 0; i < n_bytes; i++){
+        size_t i = 0;
+        for (; i < n_bytes && position < 64; i++){
+            bytes[i] ^= keystream8[position];
+            position++;
+        }
+        for (; i < n_bytes - 63; i += 64){
+            block.next(keystream8);
+            for (int j = 0; j < 64; j++){
+                bytes[i + j] ^= keystream8[j];
+            }
+        }
+        for (; i < n_bytes; i++){
             if (position >= 64){
                 block.next(keystream8);
                 position = 0;
@@ -135,5 +150,10 @@ struct Chacha20 {
             bytes[i] ^= keystream8[position];
             position++;
         }
+    }
+
+    void set_counter(uint64_t counter){
+        block.set_counter(counter);
+        position = 64;
     }
 };
