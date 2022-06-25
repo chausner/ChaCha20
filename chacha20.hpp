@@ -136,7 +136,7 @@ public:
             bytes[i] ^= keystream8[position];
             position++;
         }
-        for (; i < n_bytes - 63; i += 64){
+        for (; i + 63 < n_bytes; i += 64){
             block.next(keystream8);
             for (int j = 0; j < 64; j++){
                 bytes[i + j] ^= keystream8[j];
