@@ -1,7 +1,7 @@
 #include "chacha.hpp"
 
-#include <stdlib.h>
 #include <chrono>
+#include <cstdlib>
 #include <iostream>
 #include <vector>
 

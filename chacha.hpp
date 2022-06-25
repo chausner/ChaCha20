@@ -1,9 +1,9 @@
 #pragma once
 
 // This is high quality software because the includes are sorted alphabetically.
-#include <assert.h>
-#include <stddef.h>
-#include <stdint.h>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
 
 class ChachaBlock {
     // This is basically a random number generator seeded with key and nonce.
