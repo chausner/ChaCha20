@@ -135,9 +135,8 @@ public:
 
     void crypt(uint8_t *bytes, size_t n_bytes){
         size_t i = 0;
-        for (; i < n_bytes && position < 64; i++){
+        for (; i < n_bytes && position < 64; i++, position++){
             bytes[i] ^= keystream8[position];
-            position++;
         }
         for (; i + 63 < n_bytes; i += 64){
             block.next<rounds>(keystream8);
@@ -145,13 +144,12 @@ public:
                 bytes[i + j] ^= keystream8[j];
             }
         }
-        for (; i < n_bytes; i++){
-            if (position >= 64){
-                block.next<rounds>(keystream8);
-                position = 0;
+        if (i < n_bytes){
+            block.next<rounds>(keystream8);
+            position = 0;
+            for (; i < n_bytes; i++, position++){
+                bytes[i] ^= keystream8[position];
             }
-            bytes[i] ^= keystream8[position];
-            position++;
         }
     }
 
