@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-class Chacha20Block {
+class ChachaBlock {
     // This is basically a random number generator seeded with key and nonce.
     // Generates 64 random bytes every time count is incremented.
 
@@ -39,7 +39,7 @@ class Chacha20Block {
     }
 
 public:
-    Chacha20Block(const uint8_t key[32], const uint8_t nonce[8]){
+    ChachaBlock(const uint8_t key[32], const uint8_t nonce[8]){
         const uint8_t *magic_constant = (uint8_t*)"expand 32-byte k";
         state[ 0] = pack4(magic_constant + 0*4);
         state[ 1] = pack4(magic_constant + 1*4);
@@ -67,12 +67,13 @@ public:
         state[13] = counter >> 32;
     }
 
+    template<int rounds>
     void next(uint32_t result[16]){
         // This is where the crazy voodoo magic happens.
         // Mix the bytes a lot and hope that nobody finds out how to undo it.
         for (int i = 0; i < 16; i++) result[i] = state[i];
 
-        for (int i = 0; i < 10; i++){
+        for (int i = 0; i < rounds / 2; i++){
             quarter_round<0, 4, 8, 12>(result);
             quarter_round<1, 5, 9, 13>(result);
             quarter_round<2, 6, 10, 14>(result);
@@ -100,29 +101,31 @@ public:
         }
     }
     
+    template<int rounds>
     void next(uint8_t result8[64]){
         uint32_t temp32[16];
         
-        next(temp32);
+        next<rounds>(temp32);
         
         for (size_t i = 0; i < 16; i++) unpack4(temp32[i], result8 + i*4);
     }
 };
 
-class Chacha20 {
-    // XORs plaintext/encrypted bytes with whatever Chacha20Block generates.
+template<int rounds>
+class Chacha {
+    // XORs plaintext/encrypted bytes with whatever ChachaBlock generates.
     // Encryption and decryption are the same operation.
-    // Chacha20Blocks can be skipped, so this can be done in parallel.
+    // ChachaBlocks can be skipped, so this can be done in parallel.
     // If keys are reused, messages can be decrypted.
     // Known encrypted text with known position can be tampered with.
     // See https://en.wikipedia.org/wiki/Stream_cipher_attack
 
-    Chacha20Block block;
+    ChachaBlock block;
     uint8_t keystream8[64];
     uint8_t position;
 
 public:
-    Chacha20(
+    Chacha(
         const uint8_t key[32],
         const uint8_t nonce[8],
         uint64_t counter = 0
@@ -137,14 +140,14 @@ public:
             position++;
         }
         for (; i + 63 < n_bytes; i += 64){
-            block.next(keystream8);
+            block.next<rounds>(keystream8);
             for (int j = 0; j < 64; j++){
                 bytes[i + j] ^= keystream8[j];
             }
         }
         for (; i < n_bytes; i++){
             if (position >= 64){
-                block.next(keystream8);
+                block.next<rounds>(keystream8);
                 position = 0;
             }
             bytes[i] ^= keystream8[position];
@@ -157,3 +160,7 @@ public:
         position = 64;
     }
 };
+
+using Chacha20 = Chacha<20>;
+using Chacha12 = Chacha<12>;
+using Chacha8 = Chacha<8>;

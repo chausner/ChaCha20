@@ -1,14 +1,15 @@
-#include "chacha20.hpp"
+#include "chacha.hpp"
 
 #include <stdlib.h>
 #include <chrono>
 #include <iostream>
 #include <vector>
 
-int main(){
+template<int rounds>
+int benchmark(){
     std::vector<uint8_t> key(32);
     std::vector<uint8_t> nonce(8);
-    Chacha20 chacha(key.data(), nonce.data());
+    Chacha<rounds> chacha(key.data(), nonce.data());
 
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -24,8 +25,17 @@ int main(){
 
     double mb_per_second = buffer.size() * iterations / 1024.0 / 1024.0 / (elapsed_ms / 1000.0);
 
+    std::cout << "Rounds: " << rounds << std::endl;
     std::cout << "Elapsed: " << elapsed_ms << "ms" << std::endl;
     std::cout << "Speed: " << mb_per_second << "MB/s" << std::endl;
+
+    return 0;
+}
+
+int main(){
+    benchmark<20>();
+    benchmark<12>();
+    benchmark<8>();
 
     return 0;
 }

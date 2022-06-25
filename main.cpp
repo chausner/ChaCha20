@@ -1,4 +1,4 @@
-#include "chacha20.hpp"
+#include "chacha.hpp"
 
 #include <assert.h>
 #include <stdio.h>
