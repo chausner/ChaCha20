@@ -31,7 +31,7 @@ class Chacha20Block {
     }
 
     template<int a, int b, int c, int d>
-    void quarter_round(uint32_t x[16]){
+    static void quarter_round(uint32_t x[16]){
         x[a] += x[b]; x[d] = rotl32(x[d] ^ x[a], 16);
         x[c] += x[d]; x[b] = rotl32(x[b] ^ x[c], 12);
         x[a] += x[b]; x[d] = rotl32(x[d] ^ x[a], 8);
@@ -119,7 +119,7 @@ class Chacha20 {
 
     Chacha20Block block;
     uint8_t keystream8[64];
-    size_t position;
+    uint8_t position;
 
 public:
     Chacha20(
