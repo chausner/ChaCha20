@@ -1,6 +1,5 @@
 #pragma once
 
-// This is high quality software because the includes are sorted alphabetically.
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -69,8 +68,6 @@ public:
 
     template<int rounds>
     void next(uint32_t result[16]) {
-        // This is where the crazy voodoo magic happens.
-        // Mix the bytes a lot and hope that nobody finds out how to undo it.
         for (int i = 0; i < 16; i++) {
             result[i] = state[i];
         }
@@ -91,16 +88,12 @@ public:
         }
 
         uint32_t *counter = state + 12;
-        // increment counter
+        // Increment counter
         counter[0]++;
         if (0 == counter[0]) {
-            // wrap around occured, increment higher 32 bits of counter
+            // Wrap around occured, increment higher 32 bits of counter.
             counter[1]++;
             // Limited to 2^64 blocks of 64 bytes each.
-            // If you want to process more than 1180591620717411303424 bytes
-            // you have other problems.
-            // We could keep counting with counter[2] and counter[3] (nonce),
-            // but then we risk reusing the nonce which is very bad.
             assert(0 != counter[1]);
         }
     }
@@ -124,7 +117,7 @@ class Chacha {
     // ChachaBlocks can be skipped, so this can be done in parallel.
     // If keys are reused, messages can be decrypted.
     // Known encrypted text with known position can be tampered with.
-    // See https://en.wikipedia.org/wiki/Stream_cipher_attack
+    // See https://en.wikipedia.org/wiki/Stream_cipher_attack.
 
     ChachaBlock block;
     uint8_t keystream8[64];

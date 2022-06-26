@@ -108,16 +108,12 @@ void test_encrypt_decrypt(uint32_t expected_adler32_checksum) {
     
     // Encrypt
     
-    // Best password by consensus.
     uint8_t key[32] = {1, 2, 3, 4, 5, 6};
-    // Really does not matter what this is, except that it is only used once.
     uint8_t nonce[8] = {1, 2, 3, 4, 5, 6, 7, 8};
     Chacha chacha(key, nonce);
     chacha.crypt(bytes.data(), bytes.size());
     
     // Verify by checksum that the encrypted text is as expected.
-    // Note that the adler32 checksum is not cryptographically secure.
-    // It is only used for testing here.
     uint32_t checksum = adler32(bytes.data(), bytes.size());
     assert(checksum == expected_adler32_checksum);
     
