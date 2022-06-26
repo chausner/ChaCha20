@@ -6,7 +6,7 @@
 #include <vector>
 
 template<int rounds>
-int benchmark(){
+int benchmark() {
     std::vector<uint8_t> key(32);
     std::vector<uint8_t> nonce(8);
     Chacha<rounds> chacha(key.data(), nonce.data());
@@ -16,7 +16,7 @@ int benchmark(){
     std::vector<uint8_t> buffer(128 * 1024);
     int iterations = 100000;
 
-    for (int i = 0; i < iterations; i++){        
+    for (int i = 0; i < iterations; i++) {        
         chacha.crypt(buffer.data(), buffer.size());
     }
 
@@ -32,7 +32,7 @@ int benchmark(){
     return 0;
 }
 
-int main(){
+int main() {
     benchmark<20>();
     benchmark<12>();
     benchmark<8>();
