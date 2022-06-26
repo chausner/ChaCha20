@@ -40,7 +40,7 @@ class ChachaBlock {
     }
 
 public:
-    ChachaBlock(const uint8_t key[32], const uint8_t nonce[8]) {
+    ChachaBlock(const uint8_t key[32], const uint8_t nonce[8], uint64_t counter = 0) {
         const uint8_t *magic_constant = (uint8_t*)"expand 32-byte k";
         state[ 0] = pack4(magic_constant + 0*4);
         state[ 1] = pack4(magic_constant + 1*4);
@@ -54,16 +54,12 @@ public:
         state[ 9] = pack4(key + 5*4);
         state[10] = pack4(key + 6*4);
         state[11] = pack4(key + 7*4);
-        // 64 bit counter initialized to zero by default.
-        state[12] = 0;
-        state[13] = 0;
+        set_counter(counter);
         state[14] = pack4(nonce + 0*4);
         state[15] = pack4(nonce + 1*4);
     }
 
     void set_counter(uint64_t counter) {
-        // Want to process many blocks in parallel?
-        // No problem! Just set the counter to the block you want to process.
         state[12] = static_cast<uint32_t>(counter);
         state[13] = counter >> 32;
     }
@@ -127,8 +123,7 @@ class Chacha {
 
 public:
     Chacha(const uint8_t key[32], const uint8_t nonce[8], uint64_t counter = 0)
-        : block(key, nonce), position(64) {
-        block.set_counter(counter);
+        : block(key, nonce, counter), position(64) {
     }
 
     void crypt(uint8_t *bytes, size_t n_bytes) {
