@@ -126,7 +126,27 @@ public:
         : block(key, nonce, counter), position(64) {
     }
 
-    void crypt(uint8_t *bytes, size_t n_bytes) {
+    void encrypt(const uint8_t *bytes, size_t n_bytes, uint8_t *dest) {
+        size_t i = 0;
+        for (; i < n_bytes && position < 64; i++, position++) {
+            dest[i] = bytes[i] ^ keystream[position];
+        }
+        for (; i + 63 < n_bytes; i += 64) {
+            block.next<rounds>(keystream);
+            for (int j = 0; j < 64; j++) {
+                dest[i + j] = bytes[i + j] ^ keystream[j];
+            }
+        }
+        if (i < n_bytes) {
+            block.next<rounds>(keystream);
+            position = 0;
+            for (; i < n_bytes; i++, position++) {
+                dest[i] = bytes[i] ^ keystream[position];
+            }
+        }
+    }
+
+    void encrypt_inplace(uint8_t *bytes, size_t n_bytes) {
         size_t i = 0;
         for (; i < n_bytes && position < 64; i++, position++) {
             bytes[i] ^= keystream[position];
@@ -144,6 +164,14 @@ public:
                 bytes[i] ^= keystream[position];
             }
         }
+    }
+
+    void decrypt(const uint8_t *bytes, size_t n_bytes, uint8_t *dest) {
+        return encrypt(bytes, n_bytes, dest);
+    }
+
+    void decrypt_inplace(uint8_t *bytes, size_t n_bytes) {
+        return encrypt_inplace(bytes, n_bytes);
     }
 
     void set_counter(uint64_t counter) {
