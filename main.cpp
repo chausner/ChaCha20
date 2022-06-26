@@ -4,6 +4,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <algorithm>
+#include <iostream>
+#include <string>
 #include <vector>
 
 #ifdef NDEBUG
@@ -14,54 +17,50 @@ using namespace chausner;
 
 typedef std::vector<uint8_t> Bytes;
 
-uint8_t char_to_uint[256];
-const char uint_to_char[10 + 26 + 1] = "0123456789abcdefghijklmnopqrstuvwxyz";
-
-Bytes str_to_bytes(const char *src) {
-    return Bytes(src, src + strlen(src));
-}
-
-Bytes hex_to_raw(const Bytes &src) {
-    size_t n = src.size();
+Bytes hex_to_raw(const std::string &hex) {
+    const char *digits = "0123456789abcdefghijklmnopqrstuvwxyz";
+    auto digit_value = [digits](char c) {
+        return std::strchr(digits, c) - digits;
+    };
+    size_t n = hex.size();
     assert(n % 2 == 0);
-    Bytes dst(n/2);
+    Bytes raw(n/2);
     for (size_t i = 0; i < n/2; i++) {
-        uint8_t hi = char_to_uint[src[i*2 + 0]];
-        uint8_t lo = char_to_uint[src[i*2 + 1]];
-        dst[i] = (hi << 4) | lo;
+        uint8_t hi = digit_value(hex[i*2 + 0]);
+        uint8_t lo = digit_value(hex[i*2 + 1]);
+        raw[i] = (hi << 4) | lo;
     }
-    return dst;
+    return raw;
 }
 
-Bytes raw_to_hex(const Bytes &src) {
-    size_t n = src.size();
-    Bytes dst(n*2);
+std::string raw_to_hex(const Bytes &raw) {
+    const char *digits = "0123456789abcdefghijklmnopqrstuvwxyz";
+    size_t n = raw.size();
+    std::string hex;
+    hex.resize(n*2);
     for (size_t i = 0; i < n; i++) {
-        uint8_t hi = (src[i] >> 4) & 0xf;
-        uint8_t lo = (src[i] >> 0) & 0xf;
-        dst[i*2 + 0] = uint_to_char[hi];
-        dst[i*2 + 1] = uint_to_char[lo];
+        uint8_t hi = (raw[i] >> 4) & 0xf;
+        uint8_t lo = (raw[i] >> 0) & 0xf;
+        hex[i*2 + 0] = digits[hi];
+        hex[i*2 + 1] = digits[lo];
     }
-    return dst;
+    return hex;
 }
 
 bool operator==(const Bytes &a, const Bytes &b) {
-    size_t na = a.size();
-    size_t nb = b.size();
-    if (na != nb) return false;
-    return memcmp(a.data(), b.data(), na) == 0;
+    return a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin());
 }
 
 template<typename Chacha>
 void test_keystream(
     bool inplace,
-    const char *text_key,
-    const char *text_nonce,
-    const char *text_keystream
+    const std::string &text_key,
+    const std::string &text_nonce,
+    const std::string &text_keystream
 ) {
-    Bytes key       = hex_to_raw(str_to_bytes(text_key));
-    Bytes nonce     = hex_to_raw(str_to_bytes(text_nonce));
-    Bytes keystream = hex_to_raw(str_to_bytes(text_keystream));
+    Bytes key       = hex_to_raw(text_key);
+    Bytes nonce     = hex_to_raw(text_nonce);
+    Bytes keystream = hex_to_raw(text_keystream);
 
     // Since Chacha just XORs the plaintext with the keystream,
     // we can feed it zeros and we will get the keystream.
@@ -82,16 +81,16 @@ void test_keystream(
 template<typename Chacha>
 void test_crypt(
     bool inplace,
-    const char *text_key,
-    const char *text_nonce,
-    const char *text_plain,
-    const char *text_encrypted,
+    const std::string &text_key,
+    const std::string &text_nonce,
+    const std::string &text_plain,
+    const std::string &text_encrypted,
     uint64_t counter
 ) {
-    Bytes key       = hex_to_raw(str_to_bytes(text_key));
-    Bytes nonce     = hex_to_raw(str_to_bytes(text_nonce));
-    Bytes plain     = hex_to_raw(str_to_bytes(text_plain));
-    Bytes encrypted = hex_to_raw(str_to_bytes(text_encrypted));
+    Bytes key       = hex_to_raw(text_key);
+    Bytes nonce     = hex_to_raw(text_nonce);
+    Bytes plain     = hex_to_raw(text_plain);
+    Bytes encrypted = hex_to_raw(text_encrypted);
 
     Chacha chacha(key.data(), nonce.data(), counter);
 
@@ -148,17 +147,6 @@ void test_encrypt_decrypt(uint32_t expected_adler32_checksum) {
 }
 
 int main() {
-    // Initialize lookup table
-    for (int i = 0; i < 10; i++) {
-        char_to_uint[i + '0'] = i;
-    }
-    for (int i = 0; i < 26; i++) {
-        char_to_uint[i + 'a'] = i + 10;
-    }
-    for (int i = 0; i < 26; i++) {
-        char_to_uint[i + 'A'] = i + 10;
-    }
-
     for (bool inplace : { false, true }) {
         // From rfc7539.txt
         test_crypt<Chacha20>(inplace, "0000000000000000000000000000000000000000000000000000000000000000", "0000000000000000", "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", "76b8e0ada0f13d90405d6ae55386bd28bdd219b8a08ded1aa836efcc8b770dc7da41597c5157488d7724e03fb8d84a376a43b8f41518a11cc387b669b2ee6586", 0);
@@ -173,7 +161,7 @@ int main() {
 
     test_encrypt_decrypt<Chacha20>(3934073876);
 
-    puts("Success! Tests passed.");
+    std::cout << "Success! Tests passed." << std::endl;
 
     return 0;
 }
