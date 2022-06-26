@@ -118,7 +118,7 @@ class Chacha {
     // See https://en.wikipedia.org/wiki/Stream_cipher_attack.
 
     ChachaBlock block;
-    uint8_t keystream8[64];
+    uint8_t keystream[64];
     uint8_t position;
 
 public:
@@ -129,19 +129,19 @@ public:
     void crypt(uint8_t *bytes, size_t n_bytes) {
         size_t i = 0;
         for (; i < n_bytes && position < 64; i++, position++) {
-            bytes[i] ^= keystream8[position];
+            bytes[i] ^= keystream[position];
         }
         for (; i + 63 < n_bytes; i += 64) {
-            block.next<rounds>(keystream8);
+            block.next<rounds>(keystream);
             for (int j = 0; j < 64; j++) {
-                bytes[i + j] ^= keystream8[j];
+                bytes[i + j] ^= keystream[j];
             }
         }
         if (i < n_bytes) {
-            block.next<rounds>(keystream8);
+            block.next<rounds>(keystream);
             position = 0;
             for (; i < n_bytes; i++, position++) {
-                bytes[i] ^= keystream8[position];
+                bytes[i] ^= keystream[position];
             }
         }
     }
