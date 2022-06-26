@@ -92,10 +92,10 @@ void test_crypt(
     assert(result == encrypted);
 }
 
-uint32_t adler32(const uint8_t *bytes, size_t n_bytes) {
+uint32_t adler32(const Bytes &bytes) {
     uint32_t a = 1, b = 0;
-    for (size_t i = 0; i < n_bytes; i++) {
-        a = (a + bytes[i]) % 65521;
+    for (uint8_t byte : bytes) {
+        a = (a + byte) % 65521;
         b = (b + a) % 65521;
     }
     return (b << 16) | a;
@@ -117,7 +117,7 @@ void test_encrypt_decrypt(uint32_t expected_adler32_checksum) {
     chacha.encrypt_inplace(bytes.data(), bytes.size());
     
     // Verify by checksum that the encrypted text is as expected.
-    uint32_t checksum = adler32(bytes.data(), bytes.size());
+    uint32_t checksum = adler32(bytes);
     assert(checksum == expected_adler32_checksum);
     
     // Decrypt

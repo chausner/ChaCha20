@@ -41,7 +41,7 @@ class ChachaBlock {
 
 public:
     ChachaBlock(const uint8_t key[32], const uint8_t nonce[8], uint64_t counter = 0) {
-        const uint8_t *magic_constant = (uint8_t*)"expand 32-byte k";
+        const uint8_t *magic_constant = reinterpret_cast<const uint8_t *>("expand 32-byte k");
         state[ 0] = pack4(magic_constant + 0*4);
         state[ 1] = pack4(magic_constant + 1*4);
         state[ 2] = pack4(magic_constant + 2*4);
@@ -88,11 +88,11 @@ public:
         uint32_t *counter = state + 12;
         // Increment counter
         counter[0]++;
-        if (0 == counter[0]) {
+        if (counter[0] == 0) {
             // Wrap around occured, increment higher 32 bits of counter.
             counter[1]++;
             // Limited to 2^64 blocks of 64 bytes each.
-            assert(0 != counter[1]);
+            assert(counter[1] != 0);
         }
     }
     
