@@ -33,20 +33,6 @@ Bytes hex_to_raw(const std::string &hex) {
     return raw;
 }
 
-std::string raw_to_hex(const Bytes &raw) {
-    const char *digits = "0123456789abcdefghijklmnopqrstuvwxyz";
-    size_t n = raw.size();
-    std::string hex;
-    hex.resize(n*2);
-    for (size_t i = 0; i < n; i++) {
-        uint8_t hi = (raw[i] >> 4) & 0xf;
-        uint8_t lo = (raw[i] >> 0) & 0xf;
-        hex[i*2 + 0] = digits[hi];
-        hex[i*2 + 1] = digits[lo];
-    }
-    return hex;
-}
-
 bool operator==(const Bytes &a, const Bytes &b) {
     return a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin());
 }
