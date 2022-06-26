@@ -1,4 +1,4 @@
-#include "chacha.hpp"
+#include "chausner/chacha.hpp"
 
 #include <chrono>
 #include <cstdlib>
@@ -50,6 +50,4 @@ void benchmark_all_variants(size_t buffer_size, size_t iterations) {
 
 int main() {
     benchmark_all_variants(128 * 1024, 100000);
-
-    return 0;
 }

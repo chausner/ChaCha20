@@ -1,0 +1,9 @@
+[requires]
+catch2/2.13.9
+
+[generators]
+CMakeDeps
+CMakeToolchain
+
+[layout]
+cmake_layout
