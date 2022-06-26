@@ -4,6 +4,8 @@
 #include <cstddef>
 #include <cstdint>
 
+namespace chausner {
+
 class ChachaBlock {
     // This is basically a random number generator seeded with key and nonce.
     // Generates 64 random bytes every time count is incremented.
@@ -158,3 +160,5 @@ public:
 using Chacha20 = Chacha<20>;
 using Chacha12 = Chacha<12>;
 using Chacha8 = Chacha<8>;
+
+}

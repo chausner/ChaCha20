@@ -5,6 +5,8 @@
 #include <iostream>
 #include <vector>
 
+using namespace chausner;
+
 template<int rounds>
 int benchmark() {
     std::vector<uint8_t> key(32);

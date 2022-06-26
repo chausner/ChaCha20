@@ -6,6 +6,8 @@
 #include <cstring>
 #include <vector>
 
+using namespace chausner;
+
 typedef std::vector<uint8_t> Bytes;
 
 uint8_t char_to_uint[256];
