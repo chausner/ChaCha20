@@ -66,10 +66,12 @@ public:
 
     template<int rounds>
     void next(uint32_t result[16]) {
-        for (int i = 0; i < 16; i++) {
+        static_assert(rounds >= 2 && rounds % 2 == 0, "\"rounds\" must be an even number and greater or equal to 2");
+        
+        for (int i = 0; i < 16; i++) {            
             result[i] = state[i];
         }
-
+        
         for (int i = 0; i < rounds / 2; i++) {
             quarter_round<0, 4, 8, 12>(result);
             quarter_round<1, 5, 9, 13>(result);
