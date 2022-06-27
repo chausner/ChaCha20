@@ -30,11 +30,10 @@ void benchmark(bool inplace, size_t buffer_size, size_t iterations) {
 
     auto elapsed = std::chrono::high_resolution_clock::now() - start;
     auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
-
     double mb_per_second = buffer.size() * iterations / 1024.0 / 1024.0 / (elapsed_ms / 1000.0);
 
-    std::cout << "Inplace: " << (inplace ? "yes" : "no") << std::endl;
     std::cout << "Rounds: " << rounds << std::endl;
+    std::cout << "Inplace: " << (inplace ? "yes" : "no") << std::endl;    
     std::cout << "Elapsed: " << elapsed_ms << "ms" << std::endl;
     std::cout << "Speed: " << mb_per_second << "MB/s" << std::endl;
 }
@@ -48,6 +47,8 @@ void benchmark_all_variants(size_t buffer_size, size_t iterations) {
     benchmark<8>(true, buffer_size, iterations);
 }
 
-int main() {
+int main() {    
     benchmark_all_variants(128 * 1024, 100000);
+        
+    return 0;
 }
