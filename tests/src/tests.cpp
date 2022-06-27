@@ -1,11 +1,13 @@
 #include "chausner/chacha.hpp"
 
 #include "catch2/catch.hpp"
+#include <cstring>
 #include <fstream>
 #include <random>
 #include <stdexcept>
 #include <string>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -70,11 +72,11 @@ TEMPLATE_TEST_CASE("Keystream matches test vectors", "[keystream]", Chacha20, Ch
     CAPTURE(inplace);
 
     const char *test_vectors_path;
-    if (std::is_same_v<TestType, Chacha20>) {
+    if (std::is_same<TestType, Chacha20>::value) {
         test_vectors_path = "tests/res/test-vectors-20.csv";
-    } else if (std::is_same_v<TestType, Chacha12>) {
+    } else if (std::is_same<TestType, Chacha12>::value) {
         test_vectors_path = "tests/res/test-vectors-12.csv";
-    } else if (std::is_same_v<TestType, Chacha8>) {
+    } else if (std::is_same<TestType, Chacha8>::value) {
         test_vectors_path = "tests/res/test-vectors-8.csv";
     }
 
