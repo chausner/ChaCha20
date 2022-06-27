@@ -1,6 +1,7 @@
 #include "chausner/chacha.hpp"
 
 #include "catch2/catch.hpp"
+#include <random>
 
 using namespace chausner;
 using namespace Catch::Matchers;
@@ -197,10 +198,12 @@ TEMPLATE_TEST_CASE("Encrypting, then decrypting again yields the original plaint
     bool inplace = GENERATE(false, true);
     CAPTURE(inplace);
 
-    // Encrypt and decrypt a megabyte of [0, 1, 2, ..., 255, 0, 1, ...].
+    // Generate a megabyte of random data.
     Bytes plain(1024 * 1024);
+    std::mt19937 rand;
+    std::uniform_int_distribution<int> dist(0, 255);
     for (size_t i = 0; i < plain.size(); i++) {
-        plain[i] = i & 255;
+        plain[i] = static_cast<uint8_t>(dist(rand));
     }
 
     // Encrypt    
@@ -229,4 +232,51 @@ TEMPLATE_TEST_CASE("Encrypting, then decrypting again yields the original plaint
     
     // Check if decrypt(encrypt(input)) == input.
     REQUIRE_THAT(plain2, Equals(plain));
+}
+
+TEMPLATE_TEST_CASE("Keystreams are identical when encrypting in normal and reverse order", "[keystream]", Chacha20, Chacha12, Chacha8) {
+    bool inplace = GENERATE(false, true);
+    CAPTURE(inplace);
+
+    // Generate a kilobyte of random data.
+    Bytes plain(1024);
+    std::mt19937 rand;
+    std::uniform_int_distribution<int> dist(0, 255);
+    for (size_t i = 0; i < plain.size(); i++) {
+        plain[i] = static_cast<uint8_t>(dist(rand));
+    }
+
+    // Encrypt buffer in normal order
+    uint8_t key[32] = {1, 2, 3, 4, 5, 6};
+    uint8_t nonce[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    TestType chacha(key, nonce);
+    Bytes cipher;
+    if (inplace) {
+        cipher = plain;
+        chacha.encrypt_inplace(cipher.data(), cipher.size());
+    } else {
+        cipher.resize(plain.size());
+        chacha.encrypt(plain.data(), plain.size(), cipher.data());
+    }
+    
+    // Encrypt buffer in reverse order
+    chacha = TestType(key, nonce);
+    Bytes cipher2;
+    if (inplace) {
+        cipher2 = plain;
+    } else {
+        cipher2.resize(plain.size());
+    }
+    for (int64_t counter = plain.size() / 64 - 1; counter >= 0; counter--) {
+        chacha.set_counter(counter);
+        size_t offset = counter * 64;
+        if (inplace) {
+            chacha.encrypt_inplace(cipher2.data() + offset, 64);
+        } else {
+            chacha.encrypt(plain.data() + offset, 64, cipher2.data() + offset);
+        }
+    }
+    
+    // Check if decrypt(encrypt(input)) == input.
+    REQUIRE_THAT(cipher2, Equals(cipher));
 }
