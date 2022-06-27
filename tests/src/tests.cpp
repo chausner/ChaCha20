@@ -29,15 +29,15 @@ Bytes get_keystream(bool inplace, const Bytes &key, const Bytes &nonce, size_t n
     // Since Chacha just XORs the plaintext with the keystream,
     // we can feed it zeros and we will get the keystream.
     Bytes zeros(n_bytes, 0);
-    Bytes result(zeros);    
+    Bytes cipher(zeros);    
 
     if (inplace) {
-        chacha.encrypt_inplace(result.data(), result.size());
+        chacha.encrypt_inplace(cipher.data(), cipher.size());
     } else {
-        chacha.encrypt(zeros.data(), zeros.size(), result.data());
+        chacha.encrypt(zeros.data(), zeros.size(), cipher.data());
     }
 
-    return result;
+    return cipher;
 }
 
 // Test vectors have been taken from https://datatracker.ietf.org/doc/html/draft-strombergson-chacha-test-vectors-01
@@ -191,4 +191,42 @@ TEMPLATE_TEST_CASE("Calls to encrypt/encrypt_inplace with different buffer sizes
             REQUIRE_THAT(cipher, Equals(expected_cipher));
         }
     }
+}
+
+TEMPLATE_TEST_CASE("Encrypting, then decrypting again yields the original plaintext", "[keystream]", Chacha20, Chacha12, Chacha8) {
+    bool inplace = GENERATE(false, true);
+    CAPTURE(inplace);
+
+    // Encrypt and decrypt a megabyte of [0, 1, 2, ..., 255, 0, 1, ...].
+    Bytes plain(1024 * 1024);
+    for (size_t i = 0; i < plain.size(); i++) {
+        plain[i] = i & 255;
+    }
+
+    // Encrypt    
+    uint8_t key[32] = {1, 2, 3, 4, 5, 6};
+    uint8_t nonce[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    TestType chacha(key, nonce);
+    Bytes cipher;
+    if (inplace) {
+        cipher = plain;
+        chacha.encrypt_inplace(cipher.data(), cipher.size());
+    } else {
+        cipher.resize(plain.size());
+        chacha.encrypt(plain.data(), plain.size(), cipher.data());
+    }
+    
+    // Decrypt
+    chacha = TestType(key, nonce);
+    Bytes plain2;
+    if (inplace) {
+        plain2 = cipher;
+        chacha.decrypt_inplace(plain2.data(), plain2.size());
+    } else {
+        plain2.resize(cipher.size());
+        chacha.decrypt(cipher.data(), cipher.size(), plain2.data());
+    }
+    
+    // Check if decrypt(encrypt(input)) == input.
+    REQUIRE_THAT(plain2, Equals(plain));
 }
