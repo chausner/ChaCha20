@@ -2,6 +2,7 @@
 
 #include "catch2/catch.hpp"
 #include <random>
+#include <tuple>
 
 using namespace chausner;
 using namespace Catch::Matchers;
@@ -72,7 +73,8 @@ TEST_CASE("Chacha20: keystream matches test vectors", "[chacha20][keystream]") {
     bool inplace = GENERATE(false, true);
     CAPTURE(inplace);
 
-    auto params = GENERATE(table<Bytes, Bytes, Bytes>({
+    Bytes key, nonce, expected_keystream;
+    std::tie(key, nonce, expected_keystream) = GENERATE(table<Bytes, Bytes, Bytes>({  
         // TC1: All zero key and IV.
         { "0000000000000000000000000000000000000000000000000000000000000000"_hex, "0000000000000000"_hex, "76b8e0ada0f13d90405d6ae55386bd28bdd219b8a08ded1aa836efcc8b770dc7da41597c5157488d7724e03fb8d84a376a43b8f41518a11cc387b669b2ee65869f07e7be5551387a98ba977c732d080dcb0f29a048e3656912c6533e32ee7aed29b721769ce64e43d57133b074d839d531ed1f28510afb45ace10a1f4b794d6f"_hex },
         // TC2: Single bit in key set. All zero IV.
@@ -91,8 +93,7 @@ TEST_CASE("Chacha20: keystream matches test vectors", "[chacha20][keystream]") {
         { "c46ec1b18ce8a878725a37e780dfb7351f68ed2e194c79fbc6aebee1a667975d"_hex, "1ada31d5cf688221"_hex, "f63a89b75c2271f9368816542ba52f06ed49241792302b00b5e8f80ae9a473afc25b218f519af0fdd406362e8d69de7f54c604a6e00f353f110f771bdca8ab92e5fbc34e60a1d9a9db17345b0a402736853bf910b060bdf1f897b6290f01d138ae2c4c90225ba9ea14d518f55929dea098ca7a6ccfe61227053c84e49a4a3332"_hex }
     }));
 
-    Bytes expected_keystream = std::get<2>(params);
-    Bytes keystream = get_keystream<Chacha20>(inplace, std::get<0>(params), std::get<1>(params), expected_keystream.size());
+    Bytes keystream = get_keystream<Chacha20>(inplace, key, nonce, expected_keystream.size());
     
     REQUIRE_THAT(keystream, Equals(expected_keystream));
 }
@@ -101,7 +102,8 @@ TEST_CASE("Chacha12: keystream matches test vectors", "[chacha12][keystream]") {
     bool inplace = GENERATE(false, true);
     CAPTURE(inplace);
 
-    auto params = GENERATE(table<Bytes, Bytes, Bytes>({          
+    Bytes key, nonce, expected_keystream;
+    std::tie(key, nonce, expected_keystream) = GENERATE(table<Bytes, Bytes, Bytes>({  
         // TC1: All zero key and IV.  
         { "0000000000000000000000000000000000000000000000000000000000000000"_hex, "0000000000000000"_hex, "9bf49a6a0755f953811fce125f2683d50429c3bb49e074147e0089a52eae155f0564f879d27ae3c02ce82834acfa8c793a629f2ca0de6919610be82f411326be0bd58841203e74fe86fc71338ce0173dc628ebb719bdcbcc151585214cc089b442258dcda14cf111c602b8971b8cc843e91e46ca905151c02744a6b017e69316"_hex },
         // TC2: Single bit in key set. All zero IV.
@@ -120,8 +122,7 @@ TEST_CASE("Chacha12: keystream matches test vectors", "[chacha12][keystream]") {
         { "c46ec1b18ce8a878725a37e780dfb7351f68ed2e194c79fbc6aebee1a667975d"_hex, "1ada31d5cf688221"_hex, "1482072784bc6d06b4e73bdc118bc0103c7976786ca918e06986aa251f7e9cc1b2749a0a16ee83b4242d2e99b08d7c20092b80bc466c87283b61b1b39d0ffbabd94b116bc1ebdb329b9e4f620db695544a8e3d9b68473d0c975a46ad966ed631e42aff530ad5eac7d8047adfa1e5113c91f3e3b883f1d189ac1c8fe07ba5a42b"_hex }
     }));
 
-    Bytes expected_keystream = std::get<2>(params);
-    Bytes keystream = get_keystream<Chacha12>(inplace, std::get<0>(params), std::get<1>(params), expected_keystream.size());
+    Bytes keystream = get_keystream<Chacha12>(inplace, key, nonce, expected_keystream.size());
     
     REQUIRE_THAT(keystream, Equals(expected_keystream));
 }
@@ -130,7 +131,8 @@ TEST_CASE("Chacha8: keystream matches test vectors", "[chacha8][keystream]") {
     bool inplace = GENERATE(false, true);
     CAPTURE(inplace);
 
-    auto params = GENERATE(table<Bytes, Bytes, Bytes>({
+    Bytes key, nonce, expected_keystream;
+    std::tie(key, nonce, expected_keystream) = GENERATE(table<Bytes, Bytes, Bytes>({
         // TC1: All zero key and IV.  
         { "0000000000000000000000000000000000000000000000000000000000000000"_hex, "0000000000000000"_hex, "3e00ef2f895f40d67f5bb8e81f09a5a12c840ec3ce9a7f3b181be188ef711a1e984ce172b9216f419f445367456d5619314a42a3da86b001387bfdb80e0cfe42d2aefa0deaa5c151bf0adb6c01f2a5adc0fd581259f9a2aadcf20f8fd566a26b5032ec38bbc5da98ee0c6f568b872a65a08abf251deb21bb4b56e5d8821e68aa"_hex },
         // TC2: Single bit in key set. All zero IV.
@@ -149,8 +151,7 @@ TEST_CASE("Chacha8: keystream matches test vectors", "[chacha8][keystream]") {
         { "c46ec1b18ce8a878725a37e780dfb7351f68ed2e194c79fbc6aebee1a667975d"_hex, "1ada31d5cf688221"_hex, "838751b42d8ddd8a3d77f48825a2ba752cf4047cb308a5978ef274973be374c96ad848065871417b08f034e681fe46a93f7d5c61d1306614d4aaf257a7cff08b16f2fda170cc18a4b58a2667ed962774af792a6e7f3c77992540711a7a136d7e8a2f8d3f93816709d45a3fa5f8ce72fde15be7b841acba3a2abd557228d9fe4f"_hex }
     }));
 
-    Bytes expected_keystream = std::get<2>(params);
-    Bytes keystream = get_keystream<Chacha8>(inplace, std::get<0>(params), std::get<1>(params), expected_keystream.size());
+    Bytes keystream = get_keystream<Chacha8>(inplace, key, nonce, expected_keystream.size());
     
     REQUIRE_THAT(keystream, Equals(expected_keystream));
 }
