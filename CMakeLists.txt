@@ -1,11 +1,8 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(chacha
     VERSION 1.0.0
     LANGUAGES CXX
 )
-
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED 11)
 
 include(CTest)
 include(GNUInstallDirs)
@@ -17,6 +14,8 @@ target_include_directories(chacha
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
+
+target_compile_features(chacha INTERFACE cxx_std_11)
 
 if(BUILD_TESTING)
     enable_testing()
