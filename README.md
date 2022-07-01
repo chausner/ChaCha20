@@ -13,7 +13,7 @@ Copy header `chausner/chacha.hpp` into your project and include it:
 #include "chausner/chacha.hpp"
 ```
 
-If you are using CMake, any alternative way to integrate the library is as a CMake package:
+If you are using CMake, an alternative way to integrate the library is as a CMake package:
 
 ```cmake
 find_package(ChaCha REQUIRED)
