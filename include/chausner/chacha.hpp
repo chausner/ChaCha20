@@ -4,6 +4,16 @@
 #include <cstddef>
 #include <cstdint>
 
+#ifdef __has_include
+#if __has_include(<version>)
+#include <version>
+#endif
+#endif
+
+#if __cpp_lib_span
+#include <span>
+#endif
+
 namespace chausner {
 
 class ChachaBlock {
@@ -175,6 +185,24 @@ public:
     void decrypt_inplace(uint8_t *bytes, size_t n_bytes) {
         return encrypt_inplace(bytes, n_bytes);
     }
+
+#if __cpp_lib_span
+    void encrypt(std::span<const uint8_t> bytes, uint8_t *dest) {
+        encrypt(bytes.data(), bytes.size(), dest);
+    }
+
+    void encrypt_inplace(std::span<uint8_t> bytes) {
+        encrypt_inplace(bytes.data(), bytes.size());
+    }
+
+    void decrypt(std::span<const uint8_t> bytes, uint8_t *dest) {
+        decrypt(bytes.data(), bytes.size(), dest);
+    }
+
+    void decrypt_inplace(std::span<uint8_t> bytes) {
+        decrypt_inplace(bytes.data(), bytes.size());
+    }
+#endif
 
     void set_counter(uint64_t counter) {
         block.set_counter(counter);
