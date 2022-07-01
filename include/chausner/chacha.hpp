@@ -8,7 +8,7 @@ namespace chausner {
 
 class ChachaBlock {
     // This is basically a random number generator seeded with key and nonce.
-    // Generates 64 random bytes every time count is incremented.
+    // Generates 64 random bytes every time "counter" is incremented.
 
     uint32_t state[16];
 
@@ -16,19 +16,19 @@ class ChachaBlock {
         return (x << n) | (x >> (32 - n));
     }
 
-    static uint32_t pack4(const uint8_t *a) {
+    static uint32_t pack4(const uint8_t src[4]) {
         return
-            static_cast<uint32_t>(a[0] << 0*8) |
-            static_cast<uint32_t>(a[1] << 1*8) |
-            static_cast<uint32_t>(a[2] << 2*8) |
-            static_cast<uint32_t>(a[3] << 3*8);
+            static_cast<uint32_t>(src[0] << 0*8) |
+            static_cast<uint32_t>(src[1] << 1*8) |
+            static_cast<uint32_t>(src[2] << 2*8) |
+            static_cast<uint32_t>(src[3] << 3*8);
     }
 
-    static void unpack4(uint32_t src, uint8_t *dst) {
-        dst[0] = (src >> 0*8) & 0xff;
-        dst[1] = (src >> 1*8) & 0xff;
-        dst[2] = (src >> 2*8) & 0xff;
-        dst[3] = (src >> 3*8) & 0xff;
+    static void unpack4(uint32_t value, uint8_t dst[4]) {
+        dst[0] = (value >> 0*8) & 0xff;
+        dst[1] = (value >> 1*8) & 0xff;
+        dst[2] = (value >> 2*8) & 0xff;
+        dst[3] = (value >> 3*8) & 0xff;
     }
 
     template<int a, int b, int c, int d>
@@ -87,11 +87,11 @@ public:
             result[i] += state[i];
         }
 
-        uint32_t *counter = state + 12;
+        uint32_t *counter = &state[12];
         // Increment counter
         counter[0]++;
         if (counter[0] == 0) {
-            // Wrap around occured, increment higher 32 bits of counter.
+            // Wrap around occurred, increment higher 32 bits of counter.
             counter[1]++;
             // Limited to 2^64 blocks of 64 bytes each.
             assert(counter[1] != 0);
